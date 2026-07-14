@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Productos · POS</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+<div class="app-shell">
+    <div th:replace="~{layout/sidebar :: sidebar('productos')}"></div>
+
+    <div class="main">
+        <div class="page-header">
+            <div>
+                <h1>Productos</h1>
+                <div class="subtitle">Catálogo e inventario de la tienda</div>
+            </div>
+            <a th:href="@{/productos/nuevo}" class="btn btn-primary">+ Nuevo producto</a>
+        </div>
+
+        <div class="card" th:if="${!#lists.isEmpty(stockBajo)}" style="margin-bottom: 18px; border-color: var(--warn);">
+            <strong style="color: var(--warn);">Stock bajo:</strong>
+            <span th:each="p, iter : ${stockBajo}">
+                <span th:text="${p.nombre}">Producto</span><span th:if="${!iter.last}">, </span>
+            </span>
+        </div>
+
+        <div class="card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>SKU</th>
+                        <th>Nombre</th>
+                        <th>Categoría</th>
+                        <th>Precio</th>
+                        <th>Stock</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="p : ${productos}">
+                        <td class="mono" th:text="${p.sku}">SKU-001</td>
+                        <td th:text="${p.nombre}">Producto</td>
+                        <td th:text="${p.categoria != null ? p.categoria.nombre : '—'}">—</td>
+                        <td class="mono">$<span th:text="${#numbers.formatDecimal(p.precioVenta, 1, 2)}">0.00</span></td>
+                        <td>
+                            <span class="badge" th:classappend="${p.stockBajo} ? 'badge-warn' : 'badge-ok'" th:text="${p.stock}">0</span>
+                        </td>
+                        <td style="display:flex; gap:8px;">
+                            <a th:href="@{/productos/{id}/editar(id=${p.id})}" class="btn btn-secondary">Editar</a>
+                            <form th:action="@{/productos/{id}/desactivar(id=${p.id})}" method="post"
+                                  onsubmit="return confirm('¿Desactivar este producto?')">
+                                <button type="submit" class="btn btn-danger">Desactivar</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div th:if="${#lists.isEmpty(productos)}" class="empty-state">
+                Aún no hay productos. Agrega el primero para empezar a vender.
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Iniciar sesión · POS</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <style>
+        body { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .login-box { width: 360px; }
+        .login-box .brand { font-family: var(--font-display); font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+        .login-box .brand span { color: var(--accent); }
+        .login-box .tagline { color: var(--ink-soft); font-size: 13px; margin-bottom: 24px; }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <div class="brand">Mi<span>Tienda</span> POS</div>
+        <div class="tagline">Ingresa con tu cuenta para abrir el punto de venta</div>
+
+        <div class="card">
+            <div th:if="${param.error}" class="alert alert-error">
+                Correo o contraseña incorrectos.
+            </div>
+            <div th:if="${param.logout}" class="alert alert-success">
+                Sesión cerrada correctamente.
+            </div>
+
+            <form th:action="@{/login}" method="post">
+                <div class="form-group">
+                    <label for="username">Correo electrónico</label>
+                    <input type="email" id="username" name="username" required autofocus>
+                </div>
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

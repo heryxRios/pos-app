@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Usuarios · POS</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+<div class="app-shell">
+    <div th:replace="~{layout/sidebar :: sidebar('usuarios')}"></div>
+
+    <div class="main">
+        <div class="page-header">
+            <div>
+                <h1>Usuarios</h1>
+                <div class="subtitle">Cuentas del personal con acceso al sistema</div>
+            </div>
+            <a th:href="@{/usuarios/nuevo}" class="btn btn-primary">+ Nuevo usuario</a>
+        </div>
+
+        <div class="card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Correo</th>
+                        <th>Rol</th>
+                        <th>Estado</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="u : ${usuarios}">
+                        <td th:text="${u.nombre}">Nombre</td>
+                        <td th:text="${u.email}">correo@tienda.com</td>
+                        <td><span class="badge badge-neutral" th:text="${u.rol}">CAJERO</span></td>
+                        <td>
+                            <span class="badge" th:classappend="${u.activo} ? 'badge-ok' : 'badge-warn'"
+                                  th:text="${u.activo} ? 'Activo' : 'Inactivo'">Activo</span>
+                        </td>
+                        <td>
+                            <form th:if="${u.activo}" th:action="@{/usuarios/{id}/desactivar(id=${u.id})}" method="post"
+                                  onsubmit="return confirm('¿Desactivar este usuario?')">
+                                <button type="submit" class="btn btn-danger">Desactivar</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>

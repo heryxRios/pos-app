@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reportes · POS</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+<div class="app-shell">
+    <div th:replace="~{layout/sidebar :: sidebar('reportes')}"></div>
+
+    <div class="main">
+        <div class="page-header">
+            <div>
+                <h1>Reportes</h1>
+                <div class="subtitle">Resumen de desempeño de ventas</div>
+            </div>
+        </div>
+
+        <form method="get" th:action="@{/reportes}" class="card" style="margin-bottom: 20px; display:flex; gap:14px; align-items:end; max-width: 500px;">
+            <div class="form-group" style="margin-bottom:0;">
+                <label for="desde">Desde</label>
+                <input type="date" id="desde" name="desde" th:value="${desde}">
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+                <label for="hasta">Hasta</label>
+                <input type="date" id="hasta" name="hasta" th:value="${hasta}">
+            </div>
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+        </form>
+
+        <div class="stat-grid">
+            <div class="stat-card">
+                <div class="label">Total vendido en el rango</div>
+                <div class="value">$<span th:text="${#numbers.formatDecimal(totalVentas, 1, 2)}">0.00</span></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-bottom: 14px;">Productos más vendidos</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Unidades vendidas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="fila : ${productosMasVendidos}">
+                        <td th:text="${fila[0]}">Producto</td>
+                        <td class="mono" th:text="${fila[1]}">0</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div th:if="${#lists.isEmpty(productosMasVendidos)}" class="empty-state">
+                Aún no hay suficientes ventas para mostrar este reporte.
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

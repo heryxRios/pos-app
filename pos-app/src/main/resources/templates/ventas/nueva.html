@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Nueva venta · POS</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+<div class="app-shell">
+    <div th:replace="~{layout/sidebar :: sidebar('venta')}"></div>
+
+    <div class="main">
+        <div class="page-header">
+            <div>
+                <h1>Nueva venta</h1>
+                <div class="subtitle">Selecciona productos para agregarlos al ticket</div>
+            </div>
+        </div>
+
+        <div class="pos-grid">
+            <!-- Columna izquierda: buscador + catalogo -->
+            <div>
+                <div class="pos-search">
+                    <input type="text" id="buscador" placeholder="Buscar producto por nombre o SKU…" autofocus>
+                </div>
+                <div class="product-grid" id="grid-productos">
+                    <button type="button" class="product-tile"
+                            th:each="p : ${productos}"
+                            th:attr="data-id=${p.id}, data-nombre=${p.nombre}, data-precio=${p.precioVenta}, data-stock=${p.stock}"
+                            onclick="agregarAlCarrito(this)">
+                        <div class="nombre" th:text="${p.nombre}">Producto</div>
+                        <div class="precio">$<span th:text="${#numbers.formatDecimal(p.precioVenta, 1, 2)}">0.00</span></div>
+                        <div class="stock-tag">Stock: <span th:text="${p.stock}">0</span></div>
+                    </button>
+                </div>
+                <div th:if="${#lists.isEmpty(productos)}" class="empty-state">
+                    No hay productos activos. Agrega productos desde la sección de Productos.
+                </div>
+            </div>
+
+            <!-- Columna derecha: ticket / carrito -->
+            <div class="ticket">
+                <div class="ticket-header">
+                    <div class="label">Ticket actual</div>
+                </div>
+
+                <div class="ticket-items" id="ticket-items">
+                    <div class="empty-state" id="ticket-vacio">El carrito está vacío</div>
+                </div>
+
+                <div class="ticket-totals">
+                    <div class="row"><span>Subtotal</span><span id="txt-subtotal">$0.00</span></div>
+                    <div class="row"><span>IVA (16%)</span><span id="txt-impuesto">$0.00</span></div>
+                    <div class="row total"><span>Total</span><span id="txt-total">$0.00</span></div>
+                </div>
+
+                <div class="ticket-footer">
+                    <div class="form-group">
+                        <label for="metodo-pago">Método de pago</label>
+                        <select id="metodo-pago">
+                            <option value="EFECTIVO">Efectivo</option>
+                            <option value="TARJETA">Tarjeta</option>
+                            <option value="TRANSFERENCIA">Transferencia</option>
+                            <option value="MIXTO">Mixto</option>
+                        </select>
+                    </div>
+                    <div id="mensaje-venta"></div>
+                    <button type="button" class="btn btn-primary btn-block" id="btn-cobrar" onclick="cobrar()" disabled>
+                        Cobrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    /* Estado del carrito en memoria: [{productoId, nombre, precioUnitario, cantidad, stockDisponible}] */
+    let carrito = [];
+    const URL_REGISTRAR = /*[[@{/ventas/api/registrar}]]*/ '/ventas/api/registrar';
+    const URL_BUSCAR = /*[[@{/ventas/api/buscar-productos}]]*/ '/ventas/api/buscar-productos';
+
+    function formatoMoneda(valor) {
+        return '$' + valor.toFixed(2);
+    }
+
+    function agregarAlCarrito(boton) {
+        const id = parseInt(boton.dataset.id);
+        const nombre = boton.dataset.nombre;
+        const precio = parseFloat(boton.dataset.precio);
+        const stock = parseInt(boton.dataset.stock);
+
+        const existente = carrito.find(i => i.productoId === id);
+        if (existente) {
+            if (existente.cantidad >= stock) {
+                mostrarMensaje('No hay más stock disponible de "' + nombre + '"', true);
+                return;
+            }
+            existente.cantidad += 1;
+        } else {
+            if (stock <= 0) {
+                mostrarMensaje('"' + nombre + '" no tiene stock disponible', true);
+                return;
+            }
+            carrito.push({ productoId: id, nombre: nombre, precioUnitario: precio, cantidad: 1, stockDisponible: stock });
+        }
+        renderCarrito();
+    }
+
+    function cambiarCantidad(id, delta) {
+        const item = carrito.find(i => i.productoId === id);
+        if (!item) return;
+        const nuevaCantidad = item.cantidad + delta;
+        if (nuevaCantidad <= 0) {
+            carrito = carrito.filter(i => i.productoId !== id);
+        } else if (nuevaCantidad > item.stockDisponible) {
+            mostrarMensaje('No hay más stock disponible de "' + item.nombre + '"', true);
+            return;
+        } else {
+            item.cantidad = nuevaCantidad;
+        }
+        renderCarrito();
+    }
+
+    function quitarItem(id) {
+        carrito = carrito.filter(i => i.productoId !== id);
+        renderCarrito();
+    }
+
+    function renderCarrito() {
+        const cont = document.getElementById('ticket-items');
+        const vacio = document.getElementById('ticket-vacio');
+
+        if (carrito.length === 0) {
+            cont.innerHTML = '<div class="empty-state" id="ticket-vacio">El carrito está vacío</div>';
+        } else {
+            cont.innerHTML = carrito.map(item => {
+                const subtotal = item.precioUnitario * item.cantidad;
+                return `
+                <div class="ticket-item">
+                    <div class="nombre">${item.nombre}</div>
+                    <div class="cantidad-control">
+                        <button type="button" onclick="cambiarCantidad(${item.productoId}, -1)">−</button>
+                        <span class="mono">${item.cantidad}</span>
+                        <button type="button" onclick="cambiarCantidad(${item.productoId}, 1)">+</button>
+                    </div>
+                    <div class="subtotal">${formatoMoneda(subtotal)}</div>
+                    <button type="button" class="quitar" onclick="quitarItem(${item.productoId})" title="Quitar">×</button>
+                </div>`;
+            }).join('');
+        }
+
+        const subtotal = carrito.reduce((acc, i) => acc + i.precioUnitario * i.cantidad, 0);
+        const impuesto = subtotal * 0.16;
+        const total = subtotal + impuesto;
+
+        document.getElementById('txt-subtotal').textContent = formatoMoneda(subtotal);
+        document.getElementById('txt-impuesto').textContent = formatoMoneda(impuesto);
+        document.getElementById('txt-total').textContent = formatoMoneda(total);
+        document.getElementById('btn-cobrar').disabled = carrito.length === 0;
+    }
+
+    function mostrarMensaje(texto, esError) {
+        const cont = document.getElementById('mensaje-venta');
+        cont.innerHTML = `<div class="alert ${esError ? 'alert-error' : 'alert-success'}">${texto}</div>`;
+        setTimeout(() => { cont.innerHTML = ''; }, 4000);
+    }
+
+    async function cobrar() {
+        if (carrito.length === 0) return;
+
+        const btn = document.getElementById('btn-cobrar');
+        btn.disabled = true;
+        btn.textContent = 'Procesando…';
+
+        const body = {
+            items: carrito.map(i => ({ productoId: i.productoId, cantidad: i.cantidad })),
+            metodoPago: document.getElementById('metodo-pago').value
+        };
+
+        try {
+            const resp = await fetch(URL_REGISTRAR, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const data = await resp.json();
+
+            if (data.success) {
+                mostrarMensaje('Venta #' + data.ventaId + ' registrada por ' + formatoMoneda(data.total), false);
+                carrito = [];
+                renderCarrito();
+                setTimeout(() => window.location.reload(), 1200);
+            } else {
+                mostrarMensaje(data.mensaje || 'No se pudo registrar la venta', true);
+            }
+        } catch (e) {
+            mostrarMensaje('Error de conexión al registrar la venta', true);
+        } finally {
+            btn.textContent = 'Cobrar';
+            btn.disabled = carrito.length === 0;
+        }
+    }
+
+    // Buscador en vivo
+    let temporizadorBusqueda;
+    document.getElementById('buscador').addEventListener('input', (e) => {
+        clearTimeout(temporizadorBusqueda);
+        const q = e.target.value;
+        temporizadorBusqueda = setTimeout(async () => {
+            const resp = await fetch(URL_BUSCAR + '?q=' + encodeURIComponent(q));
+            const productos = await resp.json();
+            const grid = document.getElementById('grid-productos');
+            grid.innerHTML = productos.map(p => `
+                <button type="button" class="product-tile"
+                    data-id="${p.id}" data-nombre="${p.nombre}" data-precio="${p.precioVenta}" data-stock="${p.stock}"
+                    onclick="agregarAlCarrito(this)">
+                    <div class="nombre">${p.nombre}</div>
+                    <div class="precio">${formatoMoneda(p.precioVenta)}</div>
+                    <div class="stock-tag">Stock: ${p.stock}</div>
+                </button>
+            `).join('');
+        }, 250);
+    });
+</script>
+</body>
+</html>

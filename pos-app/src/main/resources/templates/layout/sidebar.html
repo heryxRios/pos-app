@@ -1,0 +1,16 @@
+<div th:fragment="sidebar(activo)" class="sidebar"
+     xmlns:th="http://www.thymeleaf.org"
+     xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+    <div class="brand">Mi<span>Tienda</span> POS</div>
+    <nav>
+        <a th:href="@{/ventas/nueva}" th:classappend="${activo == 'venta'} ? 'active'">Nueva venta</a>
+        <a th:href="@{/ventas/historial}" th:classappend="${activo == 'historial'} ? 'active'">Historial de ventas</a>
+        <a th:href="@{/caja}" th:classappend="${activo == 'caja'} ? 'active'">Caja</a>
+        <a th:href="@{/productos}" th:classappend="${activo == 'productos'} ? 'active'" sec:authorize="hasAnyRole('ADMIN','GERENTE')">Productos</a>
+        <a th:href="@{/reportes}" th:classappend="${activo == 'reportes'} ? 'active'" sec:authorize="hasAnyRole('ADMIN','GERENTE')">Reportes</a>
+        <a th:href="@{/usuarios}" th:classappend="${activo == 'usuarios'} ? 'active'" sec:authorize="hasRole('ADMIN')">Usuarios</a>
+    </nav>
+    <form class="logout-form" th:action="@{/logout}" method="post">
+        <button type="submit">Cerrar sesión</button>
+    </form>
+</div>

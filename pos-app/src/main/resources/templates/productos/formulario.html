@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Producto · POS</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+<div class="app-shell">
+    <div th:replace="~{layout/sidebar :: sidebar('productos')}"></div>
+
+    <div class="main">
+        <div class="page-header">
+            <div>
+                <h1 th:text="${producto.id != null ? 'Editar producto' : 'Nuevo producto'}">Nuevo producto</h1>
+                <div class="subtitle">Completa los datos del producto</div>
+            </div>
+        </div>
+
+        <div class="card" style="max-width: 640px;">
+            <form th:action="@{/productos/guardar}" th:object="${producto}" method="post">
+                <input type="hidden" th:field="*{id}">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nombre">Nombre</label>
+                        <input type="text" id="nombre" th:field="*{nombre}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="sku">SKU</label>
+                        <input type="text" id="sku" th:field="*{sku}" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="descripcion">Descripción</label>
+                    <textarea id="descripcion" th:field="*{descripcion}" rows="3"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="precioCosto">Precio de costo</label>
+                        <input type="number" step="0.01" id="precioCosto" th:field="*{precioCosto}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="precioVenta">Precio de venta</label>
+                        <input type="number" step="0.01" id="precioVenta" th:field="*{precioVenta}" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="stock">Stock actual</label>
+                        <input type="number" id="stock" th:field="*{stock}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="stockMinimo">Stock mínimo (alerta)</label>
+                        <input type="number" id="stockMinimo" th:field="*{stockMinimo}" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="categoria">Categoría</label>
+                    <select id="categoria" th:field="*{categoria}">
+                        <option value="">Sin categoría</option>
+                        <option th:each="c : ${categorias}" th:value="${c.id}" th:text="${c.nombre}">Categoría</option>
+                    </select>
+                </div>
+
+                <div style="display:flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" class="btn btn-primary">Guardar producto</button>
+                    <a th:href="@{/productos}" class="btn btn-secondary">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

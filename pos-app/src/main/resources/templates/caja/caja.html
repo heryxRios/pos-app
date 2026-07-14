@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Caja · POS</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+<div class="app-shell">
+    <div th:replace="~{layout/sidebar :: sidebar('caja')}"></div>
+
+    <div class="main">
+        <div class="page-header">
+            <div>
+                <h1>Caja</h1>
+                <div class="subtitle">Apertura y cierre del turno</div>
+            </div>
+        </div>
+
+        <div class="card" style="max-width: 480px;" th:if="${cajaAbierta == null}">
+            <h3 style="margin-bottom: 14px;">Abrir caja</h3>
+            <form th:action="@{/caja/abrir}" method="post">
+                <div class="form-group">
+                    <label for="montoInicial">Monto inicial (fondo de caja)</label>
+                    <input type="number" step="0.01" id="montoInicial" name="montoInicial" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Abrir caja</button>
+            </form>
+        </div>
+
+        <div class="card" style="max-width: 480px;" th:if="${cajaAbierta != null}">
+            <h3 style="margin-bottom: 14px;">Caja abierta</h3>
+            <div class="stat-grid" style="margin-bottom: 18px;">
+                <div class="stat-card">
+                    <div class="label">Apertura</div>
+                    <div class="value" style="font-size:16px;" th:text="${#temporals.format(cajaAbierta.fechaApertura, 'dd/MM/yyyy HH:mm')}">—</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Fondo inicial</div>
+                    <div class="value">$<span th:text="${#numbers.formatDecimal(cajaAbierta.montoInicial, 1, 2)}">0.00</span></div>
+                </div>
+            </div>
+
+            <form th:action="@{/caja/{id}/cerrar(id=${cajaAbierta.id})}" method="post"
+                  onsubmit="return confirm('¿Cerrar la caja con el monto contado?')">
+                <div class="form-group">
+                    <label for="montoContado">Monto contado en caja al cierre</label>
+                    <input type="number" step="0.01" id="montoContado" name="montoContado" required>
+                </div>
+                <button type="submit" class="btn btn-danger">Cerrar caja</button>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Historial de ventas · POS</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+<div class="app-shell">
+    <div th:replace="~{layout/sidebar :: sidebar('historial')}"></div>
+
+    <div class="main">
+        <div class="page-header">
+            <div>
+                <h1>Historial de ventas</h1>
+                <div class="subtitle">Consulta y administra las ventas registradas</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Folio</th>
+                        <th>Fecha</th>
+                        <th>Cajero</th>
+                        <th>Cliente</th>
+                        <th>Método</th>
+                        <th>Total</th>
+                        <th>Estado</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="v : ${ventas}">
+                        <td class="mono" th:text="'#' + ${v.id}">#1</td>
+                        <td th:text="${#temporals.format(v.fecha, 'dd/MM/yyyy HH:mm')}">01/01/2026</td>
+                        <td th:text="${v.usuario.nombre}">Cajero</td>
+                        <td th:text="${v.cliente != null ? v.cliente.nombre : '—'}">—</td>
+                        <td th:text="${v.metodoPago}">EFECTIVO</td>
+                        <td class="mono">$<span th:text="${#numbers.formatDecimal(v.total, 1, 2)}">0.00</span></td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${v.estado.name() == 'COMPLETADA'} ? 'badge-ok' : 'badge-warn'"
+                                  th:text="${v.estado}">COMPLETADA</span>
+                        </td>
+                        <td>
+                            <form th:if="${v.estado.name() == 'COMPLETADA'}"
+                                  th:action="@{/ventas/{id}/cancelar(id=${v.id})}" method="post"
+                                  onsubmit="return confirm('¿Cancelar esta venta? Se devolverá el stock al inventario.')">
+                                <button type="submit" class="btn btn-danger">Cancelar</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div th:if="${#lists.isEmpty(ventas)}" class="empty-state">
+                No hay ventas registradas en el rango seleccionado.
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
